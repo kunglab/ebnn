@@ -77,7 +77,7 @@ int main()
 }
 ```
 
-For examples of generated networks, see the [c/tests](https://gitlab.com/htkung/ddnn/tree/master/c/tests) folder.
+For examples of generated networks, see the [c/tests](https://gitHUB.com/kunglab/ebnn/tree/master/c/tests) folder.
 
 ## Paper
 

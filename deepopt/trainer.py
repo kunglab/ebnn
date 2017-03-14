@@ -15,7 +15,7 @@ class Trainer(object):
         self.folder = folder
         self.chain = chain
         self.gpu = gpu
-        
+
         if self.gpu >= 0:
             chainer.cuda.get_device(gpu).use()
             chain.to_gpu(gpu)
@@ -45,7 +45,7 @@ class Trainer(object):
             ['epoch']+reports), trigger=IntervalTrigger(1,'epoch'))
 
         self.trainer = trainer
-        
+
         if resume:
             #if resumeFrom is not None:
             #    trainerFile = os.path.join(resumeFrom[0],'snapshot_epoch_{:06}'.format(resumeFrom[1]))
@@ -67,9 +67,9 @@ class Trainer(object):
             self.chain.to_gpu(self.gpu)
         self.chain.test = False
         self.eval_chain.test = True
-            
+
         self.trainer.run()
-        
+
         #ext = self.trainer.get_extension('validation')()
         #test_accuracy = ext['validation/main/accuracy']
         #test_loss = ext['validation/main/loss']
@@ -95,7 +95,7 @@ class Trainer(object):
         #    if k in ["main/numsamples", "main/accuracy", "main/branch0exit", "main/branch1exit", "main/branch2exit"]:
         #        print k, "\t\t\t", v
         return result
-    
+
     # Deprecated
     def get_result(self, key):
         # this only returns the lastest log

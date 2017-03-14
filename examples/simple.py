@@ -34,15 +34,17 @@ trainer.add_testset(test)
 
 #Model parameters
 trainer.set_searchspace(
-    nfilters_embeded=[2],
+    nfilters_embeded=[5],
     nlayers_embeded=[1],
+    nfilters_cloud=[5],
+    nlayers_cloud=[1],
     lr=[1e-3]
 )
 
 #Train model
-trainer.train(niters=args.iters, bootstrap_nepochs=args.bootstrap_epochs)
+res = trainer.train(niters=args.iters, bootstrap_nepochs=args.bootstrap_epochs)
 
 # generate eBNN C library
-trainer.generate_c(args.c_file, data_shape)
-if args.gen_inter:
-    inter = trainer.generate_inter_results_c(args.inter_file, train._datasets[0][:1])
+# trainer.generate_c(args.c_file, data_shape)
+# if args.gen_inter:
+#     inter = trainer.generate_inter_results_c(args.inter_file, train._datasets[0][:1])

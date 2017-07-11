@@ -69,7 +69,7 @@ class LinearBNBST(chainer.Chain, CLink):
         n = fc_size
         k = num_classes
         ftext = "void {name}(float* input, uint8_t* output){{\n"
-        ftext += "  fused_float_linear_layer(input, {name}_bl_W, output, {name}_bl_b, {name}_bn_gamma, {name}_bn_beta, {name}_bn_mean, {name}_bn_std, {m}, {n}, {k}); \n}}\n\n"
+        ftext += "  blinear_layer(input, {name}_bl_W, output, {name}_bl_b, {name}_bn_gamma, {name}_bn_beta, {name}_bn_mean, {name}_bn_std, {m}, {n}, {k}); \n}}\n\n"
         ftext = ftext.format(name=name, m=m, n=n, k=k)
         text += ftext
 

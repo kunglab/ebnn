@@ -23,14 +23,14 @@ pip install -r requirements.txt
 ```
 
 ## Quick Start
-This library has two components: a python module that trains the eBNN and generates a C header file, and the C library which uses the generated header file and is compiled on the target device to perform inference. A simple example of network training is located at located in [examples/simple.py](https://github.com/kunglab/ebnn/blob/master/examples/simple.py.
+This library has two components: a python module that trains the eBNN and generates a C header file, and the C library which uses the generated header file and is compiled on the target device to perform inference. A simple example of network training is located at located in [examples/simple.py](https://github.com/kunglab/ebnn/blob/master/examples/simple.py).
 
-This will generate the simple_convpool.h header file which requires the ebnn.h file located in the c folder. These two files should be included in the C/Arduino code. The C library is used as follows: 
+This will generate the simple.h header file which requires the ebnn.h file. These two files should be included in the C/Arduino code. The C library is used as follows: 
 
 ```c
 #include <stdio.h>
 #include <stdint.h>
-#include "simple_convpool.h"
+#include "simple.h"
 
 int main()
 {
@@ -49,7 +49,7 @@ int main()
 }
 ```
 
-For examples of generated networks, see the [c/tests](https://gitHUB.com/kunglab/ebnn/tree/master/c/tests) folder.
+For examples of generated networks, see the [c/tests](https://github.com/kunglab/ebnn/tree/master/c/tests) folder.
 
 ## Paper
 

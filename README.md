@@ -15,7 +15,7 @@ Setup virtualenv ([read more here if interested](http://python-guide-pt-br.readt
 virtualenv env
 source env/bin/activate
 ```
-Now the bash prompt should have *(env)* in front of it. **Note: You must run `source env/bin/activate` every time you log into the server and before you run any scripts.**
+Now the bash prompt should have *(env)* in front of it. 
 
 Install required packages. Note: This project uses Chainer 2.0, which has a [few differences](http://docs.chainer.org/en/stable/upgrade.html) to Chainer 1.0.
 ```bash

@@ -4,54 +4,26 @@ We study embedded Binarized Neural Networks (eBNNs) with the aim of allowing cur
 
 This repository contains a code to train a neural network and generate C/Arduino code for embedded devices such as Arduino 101. 
 
-## Dependencies
-
-This library is dependent on Python 2.7+ and [Chainer](http://chainer.org/). Please install Chainer 1.17+ before starting.
-
+## Setup
+Clone and enter the repoistory.
+```bash
+git clone git@github.com:kunglab/ebnn.git
+cd ebnn
 ```
-pip install chainer
+Setup virtualenv ([read more here if interested](http://python-guide-pt-br.readthedocs.io/en/latest/dev/virtualenvs/)).
+```bash
+virtualenv env
+source env/bin/activate
+```
+Now the bash prompt should have *(env)* in front of it. **Note: You must run `source env/bin/activate` every time you log into the server and before you run any scripts.**
+
+Install required packages. Note: This project uses Chainer 2.0, which has a [few differences](http://docs.chainer.org/en/stable/upgrade.html) to Chainer 1.0.
+```bash
+pip install -r requirements.txt
 ```
 
 ## Quick Start
-This library has two components: a python module that trains the eBNN and generates a C header file, and the C library which uses the generated header file and is compiled on the target device to perform inference. A quick example of how the python module can be used to train a network is shown below.
-
-```python
-import os
-import sys
-import chainer
-
-from elaas.elaas import Collection
-from elaas.family.binary import BinaryFamily
-from visualize import visualize
-import deepopt.chooser
-
-# Configuration
-nepochs = 2 # number of epochs
-out_c_file = "simple_convpool.h"
-
-# Setup model type (e.g. Binary)
-trainer = Collection(nepochs=nepochs)
-trainer.set_model_family(BinaryFamily)
-
-# Get Dataset
-train, test = chainer.datasets.get_mnist(ndim=3)
-trainer.add_trainset(train)
-trainer.add_testset(test)
-
-# Model parameters
-trainer.set_searchspace(
-    nfilters_embeded=[2],
-    nlayers_embeded=[1],
-    lr=[1e-3]
-)
-
-# Train model
-trainer.train()
-
-# generate eBNN C library
-data_shape = train._datasets[0].shape[1:]
-trainer.generate_c(out_c_file, data_shape)
-```
+This library has two components: a python module that trains the eBNN and generates a C header file, and the C library which uses the generated header file and is compiled on the target device to perform inference. A simple example of network training is located at located in [examples/simple.py](https://github.com/kunglab/ebnn/blob/master/examples/simple.py.
 
 This will generate the simple_convpool.h header file which requires the ebnn.h file located in the c folder. These two files should be included in the C/Arduino code. The C library is used as follows: 
 
@@ -67,7 +39,7 @@ int main()
    
   //simulate a 28 by 28 greyscale image
   for(int i=0; i < 28*28; ++i) {
-    input[i] = i
+    input[i] = i;
   }
     
   ebnn_compute(input, output);

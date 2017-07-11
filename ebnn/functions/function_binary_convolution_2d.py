@@ -30,7 +30,6 @@ def _pair(x):
 
 
 class BinaryConvolution2DFunction(function.Function):
-
     def __init__(self, stride=1, pad=0, use_cudnn=True):
         self.sy, self.sx = _pair(stride)
         self.ph, self.pw = _pair(pad)
@@ -50,7 +49,7 @@ class BinaryConvolution2DFunction(function.Function):
             x_type.shape[1] == w_type.shape[1],
         )
 
-        if n_in.eval() == 3:
+        if n_in == 3:
             b_type = in_types[2]
             type_check.expect(
                 b_type.dtype == numpy.float32,

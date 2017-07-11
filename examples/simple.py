@@ -9,7 +9,7 @@ if __name__ == '__main__':
     train, test = util.get_dataset(args.dataset)
 
     # initialize model
-    model = net.MLP(n_units=100, n_out=10)
+    model = net.ConvNet(n_filters=16, n_out=10)
 
     # train model
     util.train_model(model, train, test, args)

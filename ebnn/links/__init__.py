@@ -55,6 +55,8 @@ uint8_t temp2[{inter_size}] = {{0}};
                 text += "  {name}(temp2, temp1);\n".format(
                     name=link.cname + str(link_idx))
 
+        link_idx = len(links) - 1
+        link = links[-1]
         if link_idx % 2 == 1:
             text += "  {name}(temp1, output);\n".format(name=link.cname + str(link_idx))
         else:

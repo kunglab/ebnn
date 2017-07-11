@@ -10,23 +10,21 @@ from chainer import reporter
 import ebnn.links as BL
 
 
-class MLP(BL.CChainMixin, chainer.Chain):
-    def __init__(self, n_units, n_out):
-        super(MLP, self).__init__()
-        self.n_units = n_units
+class ConvNet(BL.CChainMixin, chainer.Chain):
+    def __init__(self, n_filters, n_out):
+        super(ConvNet, self).__init__()
+        self.n_filters = n_filters
         self.n_out = n_out
         with self.init_scope():
-            self.l1 = BL.LinearBNBST(n_units)
-            self.l2 = BL.LinearBNBST(n_units)
-            self.l3 = BL.BinaryLinearBNSoftmax(n_out)
+            self.l1 = BL.ConvBNBST(n_filters, 3)
+            self.l2 = BL.BinaryLinearBNSoftmax(n_out)
 
     def link_order(self):
-        return [self.l1, self.l2, self.l3]
+        return [self.l1,  self.l2]
 
     def __call__(self, x, t, ret_param='loss'):
         h = self.l1(x)
         h = self.l2(h)
-        h = self.l3(h)
 
         # reports loss and accuracy (used during training)
         report = {
@@ -46,4 +44,4 @@ class MLP(BL.CChainMixin, chainer.Chain):
     # I prefer this over random generated ids as its readable
     def param_names(self):
         # in this case, n_units and n_out define the model
-        return 'MLP_{}_{}'.format(self.n_units, self.n_out)
+        return 'ConvNet{}_{}'.format(self.n_filters, self.n_out)

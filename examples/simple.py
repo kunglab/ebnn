@@ -15,7 +15,7 @@ if __name__ == '__main__':
     util.train_model(model, train, test, args)
 
     # get test accuracy
-    acc = util.accuracy(model, test)
+    acc = util.accuracy(model, test, gpu=args.gpu)
     print 'Model accuracy: ', acc
 
     # generate and save C model as a header file

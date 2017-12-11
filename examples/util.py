@@ -95,7 +95,7 @@ def default_parser(description=''):
                         help='number of epochs to learn')
     parser.add_argument('--dataset', '-d', default='mnist',
                         choices=['mnist', 'cifar10'], help='dataset name')
-    parser.add_argument('--gpu', '-g', default=0, type=int,
+    parser.add_argument('--gpu', '-g', default=-1, type=int,
                         help='GPU ID (negative value indicates CPU)')
     parser.add_argument('--out', '-o', default='_output',
                         help='Directory to output the result')

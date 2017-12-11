@@ -13,11 +13,11 @@ from ..utils import binary_util as bu
 
 
 class BinaryLinearBNSoftmax(chainer.Chain, CLink):
-    def __init__(self, out_channels):
+    def __init__(self, in_channels, out_channels):
         super(BinaryLinearBNSoftmax, self).__init__()
         self.cname = "l_b_linear_bn_softmax"
         with self.init_scope():
-            self.bl = BinaryLinear(out_channels)
+            self.bl = BinaryLinear(in_channels, out_channels)
             self.bn = BatchNormalization(out_channels)
             self.sm = SoftmaxCrossEntropy()
 
@@ -71,7 +71,7 @@ class BinaryLinearBNSoftmax(chainer.Chain, CLink):
         k = num_classes
 
         ftext = "void {name}(uint8_t* input, uint8_t* output){{\n"
-        ftext += "  blinear_layer(input, {name}_bl_W, output, {name}_bl_b, {name}_bn_gamma, {name}_bn_beta, {name}_bn_mean, {name}_bn_std, {m}, {n}, {k}); \n}}\n\n"
+        ftext += "  blinear_sm_layer(input, {name}_bl_W, output, {name}_bl_b, {name}_bn_gamma, {name}_bn_beta, {name}_bn_mean, {name}_bn_std, {m}, {n}, {k}); \n}}\n\n"
         ftext = ftext.format(name=name, m=m, n=n, k=k)
         text += ftext
 

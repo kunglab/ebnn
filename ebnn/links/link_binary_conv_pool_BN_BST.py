@@ -13,15 +13,13 @@ from ..utils import binary_util as bu
 
 
 class BinaryConvPoolBNBST(chainer.Chain, CLink):
-    def __init__(self, in_channels, out_channels, ksize=None, stride=1, pad=0, pksize=3, pstride=2, ppad=0):
-        if ksize is None:
-            bn_channels = in_channels
+    def __init__(self, in_channels, out_channels, ksize, stride=1, pad=0, pksize=3, pstride=2, ppad=0):
         super(BinaryConvPoolBNBST, self).__init__()
         with self.init_scope():
             self.bconv = BinaryConvolution2D(
                 in_channels, out_channels, ksize=ksize, stride=stride, pad=pad)
             self.pool = Pool2D(pksize, pstride, ppad)
-            self.bn = BatchNormalization(bn_channels)
+            self.bn = BatchNormalization(out_channels)
             self.bst = BST()
         self.cname = "l_b_conv_pool_bn_bst"
         self.pksize = pksize

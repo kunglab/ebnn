@@ -1,5 +1,4 @@
 import numpy as np
-from ebnn.links import CLink
 
 storage_ts = ['row_major', 'col_major']
 

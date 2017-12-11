@@ -21,7 +21,7 @@ class BinaryLinearBNBST(chainer.Chain, CLink):
         
     def __call__(self, h, test=False):
         #self.inp_shape = h.data.shape
-        h = self.bst(self.bn(self.bl(h), test=test))
+        h = self.bst(self.bn(self.bl(h)))
         return h
 
     def generate_c(self, link_idx, inp_shape):
@@ -64,7 +64,7 @@ class BinaryLinearBNBST(chainer.Chain, CLink):
         n = fc_size
         k = num_classes
         ftext = "void {name}(uint8_t* input, uint8_t* output){{\n"
-        ftext += "  fused_linear_layer(input, {name}_bl_W, output, {name}_bl_b, {name}_bn_gamma, {name}_bn_beta, {name}_bn_mean, {name}_bn_std, {m}, {n}, {k}); \n}}\n\n"
+        ftext += "  blinear_layer(input, {name}_bl_W, output, {name}_bl_b, {name}_bn_gamma, {name}_bn_beta, {name}_bn_mean, {name}_bn_std, {m}, {n}, {k}); \n}}\n\n"
         ftext = ftext.format(name=name, m=m, n=n, k=k)
         text += ftext
 

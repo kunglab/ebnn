@@ -88,13 +88,52 @@ static int bslice_4d(uint8_t* const dst, const uint8_t* const src, const int x,
                      const int h, const int d, const int kw, const int kh);
 
 
-
 /* layers types */
 static void blinear_layer(const uint8_t* A, const uint8_t* F, uint8_t* C,
                           const float* Bias, const float* Gamma,
                           const float* Beta, const float* Mean,
                           const float* Std, const int m, const int n,
                           const int k)
+{
+  uint8_t c_mask, res_sign;
+  int i, j, ni, ri, ci, c_shift, c_idx;
+  float res;
+
+  c_shift = 7;
+  c_mask = 1 << c_shift;
+  c_idx = 0;
+ 
+  /* Compute ceil in terms of 8-bits strides */
+  ni = (n + 7) / 8;
+  for (i = 0; i < m; ++i) {
+    ri = i * ni;
+    for (j = 0; j < k; ++j) {
+      ci = j * ni;
+      res = bdot(A + ri, F + ci, n);
+      res += Bias[j];
+      res = batch_norm(res, Gamma[j], Beta[j], Mean[j], Std[j]);
+      res_sign = res >= 0 ? 1 : 0;
+
+      /* store result */
+      C[c_idx] |= res_sign << c_shift;
+
+      /* update c_idx */
+      c_mask = rotr1(c_mask);
+      c_idx += (c_mask & 0x80) >> 7;
+      c_shift--;
+      c_shift =  c_shift < 0 ? 7 : c_shift;
+    }
+    c_shift = 7;
+    c_mask = 1 << c_shift;
+    c_idx += 1;
+  }
+}
+
+static void blinear_sm_layer(const uint8_t* A, const uint8_t* F, uint8_t* C,
+                             const float* Bias, const float* Gamma,
+                             const float* Beta, const float* Mean,
+                             const float* Std, const int m, const int n,
+                             const int k)
 {
   int i, j, ni, ri, ci,  max_idx;
   float res, max_res;
@@ -117,6 +156,7 @@ static void blinear_layer(const uint8_t* A, const uint8_t* F, uint8_t* C,
     C[i] = max_idx;
   }
 }
+
 static void fconv_layer(const float* A, const uint8_t* F, uint8_t* C,
                         const float* Bias, const float* Gamma, const float* Beta,
                         const float* Mean, const float* Std, const int m,

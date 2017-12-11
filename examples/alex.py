@@ -9,7 +9,7 @@ if __name__ == '__main__':
     train, test = util.get_dataset(args.dataset)
 
     # initialize model
-    model = net.ConvNet(n_filters=10, n_out=10)
+    model = net.AlexNet(n_out=10)
 
     # train model
     util.train_model(model, train, test, args)
@@ -19,4 +19,4 @@ if __name__ == '__main__':
     print('Model accuracy: ', acc)
 
     # generate and save C model as a header file
-    model.generate_c('simple.h', train._datasets[0].shape[1:])
+    model.generate_c('alex.h', train._datasets[0].shape[1:])

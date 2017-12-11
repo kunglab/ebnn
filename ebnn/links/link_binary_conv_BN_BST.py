@@ -12,14 +12,12 @@ from ..utils import binary_util as bu
 
 
 class BinaryConvBNBST(chainer.Chain, CLink):
-    def __init__(self, in_channels, out_channels, ksize=None, stride=1, pad=0):
+    def __init__(self, in_channels, out_channels, ksize, stride=1, pad=0):
         super(BinaryConvBNBST, self).__init__()
-        if ksize is None:
-            bn_channels = in_channels
         with self.init_scope():
             self.bconv = BinaryConvolution2D(
-                in_channels, out_channels, ksize=ksize, stride=stride, pad=pad)
-            self.bn = BatchNormalization(bn_channels)
+                in_channels, out_channels, ksize, stride=stride, pad=pad)
+            self.bn = BatchNormalization(out_channels)
             self.bst = BST()
         self.cname = "l_b_conv_bn_bst"
 

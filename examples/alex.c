@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "ebnn.h"
-#include "simple.h"
+#include "alex.h"
 #include "mnist.h"
 
 int main()
@@ -13,6 +13,6 @@ int main()
     ebnn_compute(&train_data[784*j], output);
     printf("actual: %d, predicted: %d\n", (int)train_labels[j], output[0]);
   }
-   
+
   return 0;
 }

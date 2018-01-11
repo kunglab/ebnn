@@ -11,13 +11,14 @@ import ebnn.links as BL
 
 
 class ConvNet(BL.CChainMixin, chainer.Chain):
-    def __init__(self, n_filters, n_out):
+    def __init__(self, n_in, n_out, n_filters):
         super(ConvNet, self).__init__()
-        self.n_filters = n_filters
+        self.n_in = n_in
         self.n_out = n_out
+        self.n_filters = n_filters
         with self.init_scope():
-            self.l1 = BL.ConvPoolBNBST(1, n_filters, 3, stride=2, pksize=3, pstride=2)
-            self.l2 = BL.BinaryLinearBNSoftmax(360, n_out)
+            self.l1 = BL.ConvPoolBNBST(n_in, n_filters, 3, stride=2, pksize=3, pstride=2)
+            self.l2 = BL.BinaryLinearBNSoftmax(None, n_out)
 
     def link_order(self):
         return [self.l1,  self.l2]

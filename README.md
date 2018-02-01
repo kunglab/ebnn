@@ -30,7 +30,6 @@ This will generate the [simple_mnist.h](https://github.com/kunglab/ebnn/blob/mas
 ```c
 #include <stdio.h>
 #include <stdint.h>
-#include "ebnn.h"
 #include "simple_mnist.h"
 #include "mnist_data.h"
 

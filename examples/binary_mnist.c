@@ -7,7 +7,6 @@ int main()
 {
   uint8_t output[1];
    
-  int idx = 0;
   for(int j = 0; j < 20; ++j) {
     int index = 1*CEIL_POS((28*28)/8)*j; //Each element packed, since binary
     ebnn_compute(&train_data[index], output);

@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
-#include "ebnn.h"
-#include "simple_binary_mnist.h"
+#include "binary_mnist.h"
 #include "binary_mnist_data.h"
 
 int main()

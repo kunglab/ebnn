@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdint.h>
-#include "ebnn.h"
 #include "simple_cifar10.h"
 #include "cifar10_data.h"
 

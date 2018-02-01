@@ -25,25 +25,24 @@ pip install -r requirements.txt
 ## Quick Start
 This library has two components: a python module that trains the eBNN and generates a C header file, and the C library which uses the generated header file and is compiled on the target device to perform inference. A simple example of network training is located at located in [examples/simple.py](https://github.com/kunglab/ebnn/blob/master/examples/simple.py).
 
-This will generate the simple.h header file which requires the ebnn.h file. These two files should be included in the C/Arduino code. The C library is used as follows: 
+This will generate the [simple_mnist.h](https://github.com/kunglab/ebnn/blob/master/examples/simple_mnist.c) header file which requires the ebnn.h file. These two files should be included in the C/Arduino code. The C library can be used as follows, as in [simple_mnist.c](https://github.com/kunglab/ebnn/blob/master/examples/simple_mnist.c): 
 
 ```c
 #include <stdio.h>
 #include <stdint.h>
-#include "simple.h"
+#include "ebnn.h"
+#include "simple_mnist.h"
+#include "mnist_data.h"
 
 int main()
 {
-  float input[28*28];
   uint8_t output[1];
    
-  //simulate a 28 by 28 greyscale image
-  for(int i=0; i < 28*28; ++i) {
-    input[i] = i;
+  int idx = 0;
+  for(int j = 0; j < 20; ++j) {
+    ebnn_compute(&train_data[1*28*28*j], output);
+    printf("actual: %d, predicted: %d\n", (int)train_labels[j], output[0]);
   }
-    
-  ebnn_compute(input, output);
-  printf("%d\n", output[0]);
    
   return 0;
 }

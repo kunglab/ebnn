@@ -7,14 +7,14 @@ if __name__ == '__main__':
     parser = util.default_parser('MLP Example')
     args = parser.parse_args()
 
-    # get the dataset (default is MNIST)
-    train, test = util.get_dataset(args.dataset)
+    # get the binary mnist dataset
+    train, test = util.get_dataset('binary-mnist')
 
     n_in = train._datasets[0].shape[1]
     n_out = len(np.unique(train._datasets[1]))
 
     # initialize model
-    model = net.AlexNet(n_in, n_out)
+    model = net.BinaryConvNet(n_in, n_out, n_filters=10)
 
     # train model
     util.train_model(model, train, test, args)
@@ -24,4 +24,4 @@ if __name__ == '__main__':
     print('Model accuracy: ', acc)
 
     # generate and save C model as a header file
-    model.generate_c('alex.h', train._datasets[0].shape[1:])
+    model.generate_c('simple_binary_mnist.h'.format(args.dataset), train._datasets[0].shape[1:])

@@ -40,7 +40,11 @@ class CChainMixin(object):
 uint8_t temp1[{inter_size}] = {{0}};
 uint8_t temp2[{inter_size}] = {{0}};
 """.format(input_size=input_size, inter_size=inter_size)
-        text += "void ebnn_compute(float *input, uint8_t *output){\n"
+
+        if 'Binary' in links[0].__class__.__name__:
+            text += "void ebnn_compute(uint8_t *input, uint8_t *output){\n"
+        else:
+            text += "void ebnn_compute(float *input, uint8_t *output){\n"
 
         link_idx = 0
         link = links[0]

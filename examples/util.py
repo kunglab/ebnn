@@ -82,6 +82,13 @@ def load_or_train_model(model, train, test, args):
 def get_dataset(dataset_name):
     if dataset_name == 'mnist':
         return get_mnist(ndim=3)
+    if dataset_name == 'binary-mnist':
+        train, test = get_mnist(ndim=3)
+        train._datasets[0][train._datasets[0] != 0] = 1
+        train._datasets[0][train._datasets[0] == 0] = -1
+        test._datasets[0][test._datasets[0] != 0] = 1
+        test._datasets[0][test._datasets[0] == 0] = -1
+        return  train, test  
     if dataset_name == 'cifar10':
         return get_cifar10(ndim=3)
     raise NameError('{}'.format(dataset_name))
@@ -94,7 +101,7 @@ def default_parser(description=''):
     parser.add_argument('--epoch', '-e', default=20, type=int,
                         help='number of epochs to learn')
     parser.add_argument('--dataset', '-d', default='mnist',
-                        choices=['mnist', 'cifar10'], help='dataset name')
+                        choices=['mnist', 'binary-mnist', 'cifar10'], help='dataset name')
     parser.add_argument('--gpu', '-g', default=-1, type=int,
                         help='GPU ID (negative value indicates CPU)')
     parser.add_argument('--out', '-o', default='_output',

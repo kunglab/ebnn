@@ -10,7 +10,8 @@ int main()
   for(int j = 0; j < 20; ++j) {
     int index = 1*CEIL_POS((28*28)/8)*j; //Each element packed, since binary
     ebnn_compute(&train_data[index], output);
-    printf("actual: %d, predicted: %d\n", (int)train_labels[j], output[0]);
+    int fail =  (int)train_labels[j] != output[0];
+    printf("actual: %d %s predicted: %d\n", (int)train_labels[j], (fail ? "<>" : "=="), output[0]);
   }
    
   return 0;

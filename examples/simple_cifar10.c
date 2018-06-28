@@ -9,7 +9,8 @@ int main()
    
   for(int j = 0; j < 20; ++j) {
     ebnn_compute(&train_data[3*32*32*j], output);
-    printf("actual: %d, predicted: %d\n", (int)train_labels[j], output[0]);
+    int fail = (int)train_labels[j] != output[0];
+    printf("actual: %d %s predicted: %d\n", (int)train_labels[j], (fail ? "<>" : "=="), output[0]);
   }
    
   return 0;

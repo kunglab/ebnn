@@ -96,7 +96,8 @@ static void blinear_layer(const uint8_t* A, const uint8_t* F, uint8_t* C,
                           const int k)
 {
   uint8_t c_mask, res_sign;
-  int i, j, ni, ri, ci, c_shift, c_idx;
+  int i, j, ni, ci, c_shift, c_idx;
+  const uint8_t *Ari;
   float res;
 
   c_shift = 7;
@@ -106,10 +107,10 @@ static void blinear_layer(const uint8_t* A, const uint8_t* F, uint8_t* C,
   /* Compute ceil in terms of 8-bits strides */
   ni = (n + 7) / 8;
   for (i = 0; i < m; ++i) {
-    ri = i * ni;
+    Ari = A + (i * ni);
     for (j = 0; j < k; ++j) {
       ci = j * ni;
-      res = bdot(A + ri, F + ci, n);
+      res = bdot(Ari, F + ci, n);
       res += Bias[j];
       res = batch_norm(res, Gamma[j], Beta[j], Mean[j], Std[j]);
       res_sign = res >= 0 ? 1 : 0;
@@ -135,17 +136,18 @@ static void blinear_sm_layer(const uint8_t* A, const uint8_t* F, uint8_t* C,
                              const float* Std, const int m, const int n,
                              const int k)
 {
-  int i, j, ni, ri, ci,  max_idx;
+  int i, j, ni, ci,  max_idx;
+  const uint8_t *Ari;
   float res, max_res;
 
   /* Compute ceil in terms of 8-bits strides */
   ni = (n + 7) / 8;
   for (i = 0; i < m; ++i) {
     max_res = -FLT_MAX;
-    ri = i * ni;
+    Ari = A + (i * ni);
     for (j = 0; j < k; ++j) {
       ci = j * ni;
-      res = bdot(A + ri, F + ci, n);
+      res = bdot(Ari, F + ci, n);
       res += Bias[j];
       res = batch_norm(res, Gamma[j], Beta[j], Mean[j], Std[j]);
       if (res > max_res) {
@@ -166,13 +168,15 @@ static void fconv_layer(const float* A, const uint8_t* F, uint8_t* C,
                         const int pl_h, const int pl_sw, const int pl_sh,
                         const int pl_pw, const int pl_ph)
 {
-  int i, j, max_m, res_size, res_w, res_h, c_idx, a_idx, f_idx;
+  int i, j, max_m, res_size, res_w, res_h, c_idx, a_idx, f_idx, whd, cp_kwkhd;
 
   c_idx = 0;
   res_w = convpool_size(w, kw, sw, pw, pl_w, pl_sw, pl_pw);
   res_h = convpool_size(h, kh, sh, ph, pl_h, pl_sh, pl_ph);
   res_size = res_w * res_h;
   max_m = CEIL_POS(res_size*m*num_f/8.0);
+  whd = w*h*d;
+  cp_kwkhd = CEIL_POS(kw*kh*d/8.0);
 
   /* initialize result */
   for (i = 0; i < max_m; ++i) {
@@ -181,8 +185,8 @@ static void fconv_layer(const float* A, const uint8_t* F, uint8_t* C,
 
   for (i = 0; i < m; ++i) {
     for (j = 0; j < num_f; ++j) {
-      a_idx = i*w*h*d;
-      f_idx = j*CEIL_POS(kw*kh*d/8.0);
+      a_idx = i*whd;
+      f_idx = j*cp_kwkhd;
       fconv(A + a_idx, F + f_idx, C, c_idx, Bias[j], Gamma[j],
             Beta[j], Mean[j], Std[j], w, h, d, kw, kh, sw, sh, pw, ph,
             pl_w, pl_h, pl_sw, pl_sh, pl_pw, pl_ph);
@@ -200,7 +204,7 @@ static void bconv_layer(const uint8_t* A, const uint8_t* F, uint8_t* C,
                         const int pl_h, const int pl_sw, const int pl_sh,
                         const int pl_pw, const int pl_ph)
 {
-  int i, j, max_m, res_size, res_w, res_h, c_idx, f_idx;
+  int i, j, max_m, res_size, res_w, res_h, c_idx, f_idx, dcp_kwkh;
 
 
   c_idx = 0;
@@ -208,6 +212,7 @@ static void bconv_layer(const uint8_t* A, const uint8_t* F, uint8_t* C,
   res_h = convpool_size(h, kh, sh, ph, pl_h, pl_sh, pl_ph);
   res_size = res_w * res_h;
   max_m = CEIL_POS(res_size*m*num_f/8.0);
+  dcp_kwkh = d*CEIL_POS(kw*kh/8.0);
 
   /* initialize result */
   for (i = 0; i < max_m; ++i) {
@@ -216,7 +221,7 @@ static void bconv_layer(const uint8_t* A, const uint8_t* F, uint8_t* C,
 
   for (i = 0; i < m; ++i) {
     for (j = 0; j < num_f; ++j) {
-      f_idx = j*d*CEIL_POS(kw*kh/8.0);
+      f_idx = j*dcp_kwkh;
       bconv(A, F + f_idx, C, c_idx, i, Bias[j], Gamma[j],
             Beta[j], Mean[j], Std[j], w, h, d, kw, kh, sw, sh, pw, ph,
             pl_w, pl_h, pl_sw, pl_sh, pl_pw, pl_ph);
@@ -257,11 +262,13 @@ static int bdot_3d(const uint8_t* A, const uint8_t* B, const int x, const int y,
   uint8_t A_slice[MAX_FILTER_BYTES] = {0};
   uint8_t B_slice[MAX_FILTER_BYTES] = {0};
   const uint8_t *B_idx;
-  int i, comp_n, res, N, B_bytes, bx, by, bw, bh;
+  int i, comp_n, res, N, B_bytes, bx, by, bw, bh, w_x, h_y;
 
   N = kw*kh;
   B_bytes = CEIL_POS(kw*kh/8.0);
   res = 0;
+  w_x = w - x;
+  h_y = h - y;
   for (i = 0; i < d; ++i) {
     B_idx = B + B_bytes*i;
     comp_n = bslice_4d(A_slice, A, x, y, z, i, w, h, d, kw, kh);
@@ -273,8 +280,8 @@ static int bdot_3d(const uint8_t* A, const uint8_t* B, const int x, const int y,
     else {
       bx = -MIN(0, x);
       by = -MIN(0, y);
-      bw = MIN(kw, w - x);
-      bh = MIN(kh, h - y);
+      bw = MIN(kw, w_x);
+      bh = MIN(kh, h_y);
       bslice_2d_filter(B_slice, B_idx, bx, by, kw, kh, bw, bh);
       res += bdot(A_slice, B_slice, comp_n);
     }
@@ -294,7 +301,7 @@ static void fconv(const float* A, const uint8_t* F, uint8_t* C,
                   const int pl_sh, const int pl_pw, const int pl_ph)
 {
   uint8_t c_mask, res_sign;
-  int pl_i, pl_j, i, j, i_in, j_in, pl_i_max, pl_j_max, c_shift, c_idx;
+  int pl_i, pl_j, i, j, i_in, j_in, pl_i_max, pl_j_max, c_shift, c_idx, pl_w2_1, pl_hpw_1;
   float res, max_res;
 
   c_shift = 7 - (c_start_idx % 8);
@@ -302,12 +309,16 @@ static void fconv(const float* A, const uint8_t* F, uint8_t* C,
   c_idx = c_start_idx / 8;
   pl_i_max = (w - kw + 2*pw)/sw + (2*pl_pw) + 1;
   pl_j_max = (h - kh + 2*ph)/sh + (2*pl_ph) + 1;
-  for (pl_i = -pl_pw; pl_i + pl_w + pl_pw - 1 < pl_i_max; pl_i += pl_sw) {
-  for (pl_j = -pl_ph; pl_j + pl_h + pl_pw - 1 < pl_j_max; pl_j += pl_sh) {
+  pl_w2_1 = pl_w + pl_pw - 1;
+  pl_hpw_1 = pl_h + pl_pw - 1;
+  for (pl_i = -pl_pw; pl_i + pl_w2_1 < pl_i_max; pl_i += pl_sw) {
+  for (pl_j = -pl_ph; pl_j + pl_hpw_1 < pl_j_max; pl_j += pl_sh) {
     max_res = res = -FLT_MAX;
-    for (i_in = pl_i; i_in < pl_i + pl_w; ++i_in) {
+    int pl_i_pl_w = pl_i + pl_w;
+    for (i_in = pl_i; i_in < pl_i_pl_w; ++i_in) {
     i = conv_idx(i_in, w, kw, sw, pw);
-    for (j_in = pl_j; j_in < pl_j + pl_h; ++j_in) {
+    int pl_j_pl_h = pl_j + pl_h;
+    for (j_in = pl_j; j_in < pl_j_pl_h; ++j_in) {
       j = conv_idx(j_in, h, kh, sh, ph);
       if (i >= -pw && j >= -ph) {
         res = fdot_3d(A, F, i, j, w, h, d, kw, kh);
@@ -341,7 +352,7 @@ static void bconv(const uint8_t* A, const uint8_t* F, uint8_t* C,
                   const int pl_ph)
 {
   uint8_t c_mask, res_sign;
-  int pl_i, pl_j, i, j, i_in, j_in, pl_i_max, pl_j_max, c_shift, c_idx;
+  int pl_i, pl_j, i, j, i_in, j_in, pl_i_max, pl_j_max, c_shift, c_idx, pl_w2_1, pl_hpw_1;
   float res, max_res;
 
   c_shift = 7 - (c_start_idx % 8);
@@ -349,12 +360,16 @@ static void bconv(const uint8_t* A, const uint8_t* F, uint8_t* C,
   c_idx = c_start_idx / 8;
   pl_i_max = (w - kw + 2*pw)/sw + (2*pl_pw) + 1;
   pl_j_max = (h - kh + 2*ph)/sh + (2*pl_ph) + 1;
-  for (pl_i = -pl_pw; pl_i + pl_w + pl_pw - 1 < pl_i_max; pl_i += pl_sw) {
-  for (pl_j = -pl_ph; pl_j + pl_h + pl_pw - 1 < pl_j_max; pl_j += pl_sh) {
+  pl_w2_1 = pl_w + pl_pw - 1;
+  pl_hpw_1 = pl_h + pl_pw - 1;
+  for (pl_i = -pl_pw; pl_i + pl_w2_1 < pl_i_max; pl_i += pl_sw) {
+  for (pl_j = -pl_ph; pl_j + pl_hpw_1 < pl_j_max; pl_j += pl_sh) {
     max_res = res = -FLT_MAX;
-    for (i_in = pl_i; i_in < pl_i + pl_w; ++i_in) {
+    int pl_i_pl_w = pl_i + pl_w;
+    for (i_in = pl_i; i_in < pl_i_pl_w; ++i_in) {
     i = conv_idx(i_in, w, kw, sw, pw);
-    for (j_in = pl_j; j_in < pl_j + pl_h; ++j_in) {
+    int pl_j_pl_h = pl_j + pl_h;
+    for (j_in = pl_j; j_in < pl_j_pl_h; ++j_in) {
       j = conv_idx(j_in, h, kh, sh, ph);
       if (i >= -pw && j >= -ph) {
         res = bdot_3d(A, F, i, j, z, w, h, d, kw, kh);
@@ -383,17 +398,19 @@ static float fdot_3d(const float* A, const uint8_t* B, const int x, const int y,
                      const int kh)
 {
   uint8_t  bitset;
-  int i, j, k, b_idx, A_bytes;
+  int i, j, k, b_idx, A_bytes, x_kw, y_kh;
   float a, res;
   const float *A_slice;
 
   A_bytes = w*h;
   res = 0;
   b_idx = 0;
+  x_kw = x + kw;
+  y_kh = y + kh;
   for (i = 0; i < d; ++i) {
     A_slice = A + A_bytes*i;
-    for (j = x; j < x + kw; ++j) {
-      for (k = y; k < y + kh; ++k) {
+    for (j = x; j < x_kw; ++j) {
+      for (k = y; k < y_kh; ++k) {
         /* handles padding */
         if (j < 0 || j > h-1 || k < 0 || k > w-1) {
           a = 0.0;
@@ -465,7 +482,7 @@ static int bslice_2d(uint8_t* const dst, const uint8_t* const src, const int x,
                      const int y, const int w, const int h, const int kw,
                      const int kh)
 {
-  int i, j, n, idx, shift, bytes;
+  int i, j, n, idx, shift, bytes, x_kw, y_kh;
   uint8_t mask, bitset;
 
   /* initiaize dst */
@@ -477,8 +494,10 @@ static int bslice_2d(uint8_t* const dst, const uint8_t* const src, const int x,
   idx = 0;
   shift = 7;
   n = 0;
-  for (i = x; i < x + kw; ++i) {
-    for (j = y; j < y + kh; ++j) {
+  x_kw = x + kw;
+  y_kh = y + kh;
+  for (i = x; i < x_kw; ++i) {
+    for (j = y; j < y_kh; ++j) {
       /* Padding out of bounds */
       if (i < 0 || i > h-1 || j < 0 || j > w-1) {
         continue;
@@ -502,7 +521,7 @@ static int bslice_2d_filter(uint8_t* const dst, const uint8_t* const src,
                             const int x, const int y, const int w, const int h,
                             const int kw, const int kh)
 {
-  int i, j, n, idx, shift, bytes, bitset;
+  int i, j, n, idx, shift, bytes, bitset, x_kw, y_kh;
   uint8_t mask;
 
   /* initiaize dst */
@@ -514,8 +533,10 @@ static int bslice_2d_filter(uint8_t* const dst, const uint8_t* const src,
   idx = 0;
   shift = 7;
   n = 0;
-  for (i = x; i < x + kw; ++i) {
-    for (j = y; j < y + kh; ++j) {
+  x_kw = x + kw;
+  y_kh = y + kh;
+  for (i = x; i < x_kw; ++i) {
+    for (j = y; j < y_kh; ++j) {
       /* Padding out of bounds */
       if (i < 0 || i > h-1 || j < 0 || j > w-1) {
         continue;
@@ -540,7 +561,7 @@ static int bslice_4d(uint8_t* const dst, const uint8_t* const src, const int x,
                      const int y, const int zi, const int zj, const int w,
                      const int h, const int d, const int kw, const int kh)
 {
-  int i, j, n, idx, shift, bytes, bitset;
+  int i, j, n, idx, shift, bytes, bitset, x_kw, y_kh;
   uint8_t mask;
 
   /* initialize dest */
@@ -552,8 +573,10 @@ static int bslice_4d(uint8_t* const dst, const uint8_t* const src, const int x,
   idx = 0;
   shift = 7;
   n = 0;
-  for (i = x; i < x + kw; ++i) {
-    for (j = y; j < y + kh; ++j) {
+  x_kw = x + kw;
+  y_kh = y + kh;
+  for (i = x; i < x_kw; ++i) {
+    for (j = y; j < y_kh; ++j) {
       if (i < 0 || i > h-1 || j < 0 || j > w-1) {
         continue;
       }

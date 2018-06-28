@@ -1,0 +1,8 @@
+compile() {
+    gcc -Os -I../c -o $1 $1.c
+}
+
+compile binary_mnist
+compile simple_cifar10
+compile alex
+compile simple_mnist

@@ -10,7 +10,7 @@ Clone and enter the repoistory.
 git clone git@github.com:kunglab/ebnn.git
 cd ebnn
 ```
-Setup virtualenv ([read more here if interested](http://python-guide-pt-br.readthedocs.io/en/latest/dev/virtualenvs/)).
+Setup virtualenv ([read more here if interested](https://virtualenv.pypa.io/en/stable/userguide/)).
 ```bash
 virtualenv env
 source env/bin/activate
